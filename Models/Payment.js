@@ -1,5 +1,5 @@
 import { connect, Schema } from "mongoose";
-
+import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
   booking_id: {
@@ -18,6 +18,10 @@ const paymentSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  phoneNumber: {
+    type: Number,
+    required: true,
+  }
 });
 
 

@@ -1,12 +1,20 @@
 
 import Event from "../Models/Event.js"
+import User from "../Models/User.js"
+import Venue from "../Models/Eventvenue.js"
+import Guestlist from "../Models/Guestlist.js"
+import Noti from "../Models/Notification.js"
+import eventvenue from "../Models/Eventvenue.js"
+
+
+
+
 
 const createEvent = async(eventData)=>{
     const newEvent = new Event({
         user_id: eventData.user_id,
         eventType: eventData.eventType,
         eventDate: eventData.eventDate,
-        eventTime: eventData.eventTime,
         location: eventData.location,
         guest: eventData.guest,
         status: eventData.status,
@@ -18,6 +26,9 @@ const createEvent = async(eventData)=>{
 export async function createnewEvent(req , res) {
     try{
         const eventData = req.body
+        const user_id = await User.create({event_id: event_id, ...req.body.User})
+        const venue = await Venue.create({event_id: event_id, ...req.body.Venue})
+        const guest = await Guestlist.create({event_id: event_id, ...req.body.Guestlist})
         const newEvent = await createEvent(eventData)
         res.status(201).json({
             message: "Event created successfully"

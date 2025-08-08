@@ -1,5 +1,5 @@
 import userServer from "../services/user.js";
-import user from "../models/User.js";
+import user from "../Models/User.js";
 
 export async function createUser(req, res) {
   try {
@@ -26,11 +26,11 @@ export async function allUsers(req, res) {
 export async function oneUser(req, res) {
   try {
     const userId = req.params.id;
-    const user = await user.findById(userId);
-    if (!user) {
+    const foundUser = await user.findById(userId);
+    if (!foundUser) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user);
+    res.json(foundUser);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching user" });

@@ -1,13 +1,13 @@
 import e, { Router } from "express";
-import { createTask , allTask, oneTask,updateTask, deleteTask} from "../Controller/eventtaskController.js";
+import { allPayments, createPayment, onePayment } from "../Controller/paymentController.js";
 
 
 
 const paymentRouter = Router()
 
-paymentRouter.post('/newTask',  createTask)
-paymentRouter.get('/allTask', allTask)
-paymentRouter.get('/oneTask', oneTask)
+paymentRouter.post('/newPayment', createPayment)
+paymentRouter.get('/allPayment', allPayments)
+paymentRouter.get('/onepayment', onePayment)
 
 
 

@@ -1,22 +1,22 @@
 
 import payment from "../Models/Payment.js";
 import Payment from "../Models/Payment.js"
+import booking from "../Models/Booking.js";
+import event from "../Models/Event.js";
 
-const createPayment = async(paymentData)=>{
+const createnewPayment = async(paymentData)=>{
     const newpayment = new Payment({
         booking_id: paymentData.booking_id,
         event_id:paymentData.event_id,
         payment_method:paymentData.payment_method,
         amount:paymentData.amount,
+        phoneNumber:paymentData.phoneNumber,
         payment_date:paymentData.payment_date
     })
 
     const savedPayment = await newpayment.save()
     return savedPayment
 };
-
-
-
 
 
 export async function createPayment(req , res) {
@@ -86,44 +86,9 @@ export async function onePayment(req, res){
 }
 
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
 
-// Route to handle payment request
-app.post("/api/process-payment", async (req, res) => {
-  const { phoneNumber, amount, cardNumber, cardName, expiryDate, cvv } = req.body;
 
-  if (!phoneNumber || !amount || !cardNumber || !cardName || !expiryDate) {
-    return res.status(400).json({ status: "error", message: "Missing required fields" });
-  }
 
-  try {
-    const response = await axios.post("https://api.pay.staging.mynkwa.com/collect", {
-      phoneNumber,
-      amount,
-      cardNumber,
-      cardName,
-      expiryDate,
-      cvv,
-    }, {
-      headers: {
-        "X-API-Key": "jdDNslBrLY6ygM-7fPGVf",
-        "Content-Type": "application/json",
-      },
-    });
 
-    res.status(200).json({
-      status: "success",
-      message: "Payment processed",
-      response: response.data,
-    });
-  } catch (error) {
-    console.error("Payment API error:", error.message);
-    res.status(500).json({
-      status: "error",
-      message: "Payment processing failed",
-      details: error.response?.data || error.message,
-    });
-  }
-});
+
+export default { createnewPayment }

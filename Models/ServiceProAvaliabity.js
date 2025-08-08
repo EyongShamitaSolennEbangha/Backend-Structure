@@ -1,5 +1,5 @@
 import { connect, Schema } from "mongoose";
-
+import mongoose from "mongoose";
 
 const serviceProviderAvailabilitySchema = new mongoose.Schema({
   service_provider_id: {

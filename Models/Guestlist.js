@@ -1,4 +1,5 @@
 import { connect, Schema } from "mongoose";
+import mongoose from "mongoose";
 
 const guestlistSchema = new mongoose.Schema({
    event_id:{

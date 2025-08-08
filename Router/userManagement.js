@@ -3,6 +3,7 @@ import {allUsers, createUser, deleteUser, oneUser, updateUser} from '../Controll
 
 const userRouter = Router()
 
+
 userRouter.post('/register', createUser);
 userRouter.get('/', allUsers);
 userRouter.get('/:id', oneUser)

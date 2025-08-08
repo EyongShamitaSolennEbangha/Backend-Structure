@@ -1,4 +1,6 @@
 import EventTask from "../Models/EventTask.js";
+import User from "../Models/User.js"
+import Event from "../Models/Event.js"
 
 const createTask = async (TaskData) => {
   const newTask = new TaskData({
@@ -12,9 +14,6 @@ const createTask = async (TaskData) => {
   const savedTask = await newTask.save();
   return savedTask;
 };
-
-
-
 
 
 export async function createnewTask(req , res) {
@@ -36,7 +35,6 @@ export async function createnewTask(req , res) {
     }
     
 }
-
 
 
 
@@ -82,7 +80,6 @@ export async function oneTask(req, res){
         })
     }
 }
-
 
 
 
@@ -138,3 +135,6 @@ export async function deleteTask(params) {
     }
     
 }
+
+
+export default { createTask }
