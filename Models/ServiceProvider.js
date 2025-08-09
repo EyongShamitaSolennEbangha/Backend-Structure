@@ -25,6 +25,27 @@ const servicerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  id_card: {
+    type: String,
+    required: true,
+  },
+
+  qualifications: {
+    type: String,
+    required: true,
+  },
+  email:{
+    type: String,
+    required: true,
+    unique: true
+  },
+  password:{
+    type: String,
+    required: true
+  }
+
+
+
 });
 
 

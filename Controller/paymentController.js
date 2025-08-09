@@ -6,12 +6,10 @@ import event from "../Models/Event.js";
 
 const createnewPayment = async(paymentData)=>{
     const newpayment = new Payment({
-        booking_id: paymentData.booking_id,
-        event_id:paymentData.event_id,
-        payment_method:paymentData.payment_method,
+ 
         amount:paymentData.amount,
         phoneNumber:paymentData.phoneNumber,
-        payment_date:paymentData.payment_date
+      
     })
 
     const savedPayment = await newpayment.save()

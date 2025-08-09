@@ -2,18 +2,18 @@ import { connect, Schema } from "mongoose";
 import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
-  booking_id: {
-    type: String,
-    required: true,
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-  },
-  paymentDate: {
-    type: String,
-    required: true,
-  },
+  // booking_id: {
+  //   type: String,
+  //   required: true,
+  // },
+  // paymentMethod: {
+  //   type: String,
+  //   required: true,
+  // },
+  // paymentDate: {
+  //   type: String,
+  //   required: true,
+  // },
   amount: {
     type: Number,
     required: true,
