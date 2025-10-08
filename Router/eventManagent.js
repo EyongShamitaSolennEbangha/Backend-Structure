@@ -1,16 +1,27 @@
-import e, { Router } from "express";
-import { createnewEvent, allEvent,oneEvent,updateEvent,deleteEvent } from "../Controller/eventController.js";
+import express from "express";
+import {
+  createEvent,
+  allEvents,
+  oneEvent,
+  updateEvent,
+  deleteEvent,
+  getEventsByDateRange,
+  getUpcomingEvents,
+  searchEvents
+} from "../Controller/eventController.js";
 
+const router = express.Router();
 
+// Basic CRUD routes
+router.get("/allevents", allEvents);
+router.get("/event/:id", oneEvent);
+router.put("/event/:id", updateEvent);
+router.delete("/event/:id", deleteEvent);
+router.post("/newevent", createEvent);
 
-const eventRouter = Router()
+// Additional utility routes
+router.get("/events/date-range", getEventsByDateRange);
+router.get("/events/upcoming", getUpcomingEvents);
+router.get("/events/search", searchEvents);
 
-eventRouter.post('/newevent',  createnewEvent)
-eventRouter.get('/allevents',allEvent)
-eventRouter.get('/oneevent', oneEvent)
-eventRouter.put('/updateevent',updateEvent)
-eventRouter.delete('/deleteevent',deleteEvent)
-
-
-
-export default eventRouter;
+export default router;

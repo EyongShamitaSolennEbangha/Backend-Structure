@@ -1,197 +1,249 @@
-import userServer from "../services/user.js";
-import user from "../Models/User.js";
-
-export async function createUser(req, res) {
-  try {
-    const userData = req.body;
-    const user = await userServer.createUser(userData);
-    res.status(201).json({ user: user, message: "user created  successfully" });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
-  }
-}
-
-export async function allUsers(req, res) {
-  try {
-    const users = await user.find();
-    console.log(users);
-    res.json(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching users" });
-  }
-}
-
-export async function oneUser(req, res) {
-  try {
-    const userId = req.params.id;
-    const foundUser = await user.findById(userId);
-    if (!foundUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(foundUser);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching user" });
-  }
-}
-
-export async function updateUser(req, res) {
-  try {
-    const updateUser = await user.findByIdAndUpdate(req.params.id, req.body);
-
-    if (!updateUser) {
-      return res.status(404).json({ message: "No Updated User Found" });
-    }
-    res.json({ message: "Updated user" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "No User Found" });
-  }
-}
-
-export async function deleteUser(req, res) {
-  try {
-    const deletedUser = await user.findByIdAndDelete(req.params.id);
-    if (!deletedUser) {
-      res.status(404).json({ message: "Not found" });
-    }
-    res.json({ message: "User Deleted" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "User Not Deleted" });
-  }
-}
-
-
-
-
-import user from "../Models/User.js";
+import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import cloudinary from "../lib/cloudinary.js";
 
-// User Registration (Sign Up)
-export async function createUser(req, res) {
+// Utility function to generate JWT and set cookie
+const generateTokenAndCookie = (res, userId, userData) => {
+  const token = jwt.sign(
+    { 
+      userId,
+      email: userData.email,
+      role: userData.role 
+    }, 
+    process.env.JWT_SECRET || "your_jwt_secret", 
+    { expiresIn: "7d" }
+  );
+
+  // Set HTTP-only cookie
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return token;
+};
+
+// UNIFIED LOGIN - for both clients and providers
+export const login = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { email, password } = req.body;
+
+    console.log('🔐 Login attempt for:', email);
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find user by email (both clients and providers)
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      console.log('❌ User not found:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log('❌ Invalid password for user:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate token (both cookie and response)
+    const token = generateTokenAndCookie(res, user._id, user);
+
+    console.log('✅ Login successful:', { email: user.email, role: user.role });
+
+    // RETURN TOKEN IN RESPONSE for frontend to store in localStorage
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token, // Frontend stores this in localStorage
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+        companyName: user.companyName
+      }
+    });
+
+  } catch (error) {
+    console.log("❌ Error in login:", error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during login'
+    });
+  }
+};
+
+// UNIFIED REGISTER - for both clients and providers
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, role, companyName } = req.body;
+
+    console.log('📝 Registration attempt:', { email, role });
+
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, password, and role are required'
+      });
+    }
+
+    // Validate role
+    if (!['client', 'provider'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role must be either "client" or "provider"'
+      });
+    }
 
     // Check if user already exists
-    const existingUser = await user.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create and save user
-    const newUser = new user({
+    // Create user data
+    const userData = {
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role,
+      role
+    };
+
+    // Add company name for providers
+    if (role === 'provider' && companyName) {
+      userData.companyName = companyName;
+    }
+
+    // Create user
+    const user = new User(userData);
+    await user.save();
+
+    // Generate token (both cookie and response)
+    const token = generateTokenAndCookie(res, user._id, user);
+
+    console.log('✅ Registration successful:', { email: user.email, role: user.role });
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      token, // Frontend stores this in localStorage
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        companyName: user.companyName,
+        profilePic: user.profilePic
+      }
     });
-    const savedUser = await newUser.save();
 
-    // Never return password in response
-    const { password: pw, ...userWithoutPassword } = savedUser.toObject();
-
-    res.status(201).json({ user: userWithoutPassword, message: "User created successfully" });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
+    console.log("❌ Error in registration:", error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during registration'
+    });
   }
-}
+};
 
-// User Login
-export async function loginUser(req, res) {
+// CHECK AUTH STATUS
+export const checkAuth = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const foundUser = await user.findOne({ email });
-    if (!foundUser) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    // User is attached by authMiddleware
+    res.status(200).json({
+      success: true,
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        profilePic: req.user.profilePic,
+        companyName: req.user.companyName
+      }
+    });
+  } catch (error) {
+    console.log("❌ Error in checkAuth:", error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking authentication status'
+    });
+  }
+};
+
+// LOGOUT
+export const logout = (req, res) => {
+  try {
+    res.cookie("jwt", "", { 
+      httpOnly: true,
+      expires: new Date(0) 
+    });
+    
+    res.status(200).json({ 
+      success: true,
+      message: "Logged out successfully" 
+    });
+  } catch (error) {
+    console.log("❌ Error in logout:", error.message);
+    res.status(500).json({ 
+      success: false,
+      message: "Internal Server Error" 
+    });
+  }
+};
+
+// UPDATE PROFILE
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    const userId = req.user._id;
+    
+    if (!profilePic) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Profile pic is required" 
+      });
     }
 
-    // Compare password
-    const isMatch = await bcrypt.compare(password, foundUser.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true }
+    ).select('-password');
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: foundUser._id, role: foundUser.role },
-      "your_jwt_secret", // Replace with env variable in production!
-      { expiresIn: "1h" }
-    );
-
-    res.json({ token, message: "Login successful" });
+    res.status(200).json({
+      success: true,
+      user: updatedUser
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Login failed" });
+    console.log("❌ Error in update profile:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Internal server error" 
+    });
   }
-}
-
-// Example: Protecting a route with JWT
-export function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, "your_jwt_secret");
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-}
-
-// Other CRUD operations (unchanged, but you can protect them with authMiddleware)
-export async function allUsers(req, res) {
-  try {
-    const users = await user.find().select("-password");
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching users" });
-  }
-}
-
-export async function oneUser(req, res) {
-  try {
-    const userId = req.params.id;
-    const foundUser = await user.findById(userId).select("-password");
-    if (!foundUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(foundUser);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching user" });
-  }
-}
-
-export async function updateUser(req, res) {
-  try {
-    const updateUser = await user.findByIdAndUpdate(req.params.id, req.body, { new: true }).select("-password");
-    if (!updateUser) {
-      return res.status(404).json({ message: "No Updated User Found" });
-    }
-    res.json({ message: "Updated user", user: updateUser });
-  } catch (error) {
-    res.status(500).json({ message: "No User Found" });
-  }
-}
-
-export async function deleteUser(req, res) {
-  try {
-    const deletedUser = await user.findByIdAndDelete(req.params.id);
-    if (!deletedUser) {n
-      return res.status(404).json({ message: "Not found" });
-    }
-    res.json({ message: "User Deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "User Not Deleted" });
-  }
-} 
+};

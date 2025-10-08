@@ -1,20 +1,13 @@
-import event from '../Models/Event.js'
-import Notification  from '../Models/Notification.js'
+import Notification from "../Models/Notification.js";
 
+export const createNotification = async (notificationData) => {
+  const newNotification = new Notification({
+    user_id: notificationData.user_id,
+    event_id: notificationData.event_id,
+    notificationType: notificationData.notificationType,
+    notificationMessage: notificationData.notificationMessage,
+    scheduledAt: notificationData.scheduledAt, // for reminders
+  });
 
-
-const createNot = async(NotiData)=>{
-
-    const newNoti = new Noti({
-        user_id:NotiData.user_id,
-        Notification_type:NotiData.Notification_type,
-        Notification_message:NotiData.Notification_message
-   
-
-    })
-    
-    const savedNotification = await Notification.save()
-    return savedNotification
-}                       
-
-export default { createNot }
+  return await newNotification.save();
+};

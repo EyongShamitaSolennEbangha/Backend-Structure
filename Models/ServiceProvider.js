@@ -1,7 +1,6 @@
 import { connect, Schema } from "mongoose";
 import mongoose from "mongoose";
 
-
 const servicerSchema = new mongoose.Schema({
   user_id: {
     type: String,
@@ -34,20 +33,16 @@ const servicerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  email:{
+  email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
-  password:{
+  password: {
     type: String,
-    required: true
-  }
-
-
-
+    required: true,
+  },
 });
 
-
-const  servicer = new mongoose.model('ServiceProvider', servicerSchema,)
+const servicer = new mongoose.model("ServiceProvider", servicerSchema);
 export default servicer;
