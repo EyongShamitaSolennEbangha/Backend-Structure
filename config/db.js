@@ -1,19 +1,33 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load env from correct path
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const connectDB = async () => {
-  console.log("Connecting to DB using URI:", process.env.MONGO_URI); 
-
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+    // Use single MONGO_URI instead of dev/prod split
+    const uri = process.env.MONGO_URI;
+    
+    if (!uri) {
+      throw new Error('MongoDB URI is not defined in environment variables');
+    }
+
+    console.log(`Connecting to DB using URI: ${uri}`);
+    
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
-    console.log("Database Connected ");
+
+    console.log("Database Connected Successfully ✅");
   } catch (error) {
-    console.error("Failed to Connect DataBase ", error);
+    console.error("❌ Failed to Connect Database:", error.message);
     process.exit(1);
   }
 };
