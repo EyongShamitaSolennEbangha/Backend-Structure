@@ -8,8 +8,9 @@ import axios from "axios";
 import bookingRouter from "./Router/bookingManagement.js";
 import Router from "./Router/auth.js";
 import paymentRouter from "./Router/paymentManagement.js";
-import providerBookingRoutes from './Router/provider.js';
-import ServiceRouter from "./Router/service.js"
+import providerBookingRoutes from "./Router/provider.js";
+import ServiceRouter from "./Router/service.js";
+import socketTestRoutes from './Router/socket-test.routes.js';
 import Notification from "./Models/Notification.js";
 import { app, server } from "./lib/socket.js";
 import nodemailer from "nodemailer";
@@ -17,12 +18,6 @@ import twilio from "twilio";
 import { startNotificationScheduler } from "./scheduler/notificationSchedular.js";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
-
-
-
-
-
-
 
 dotenv.config();
 import morgan from "morgan";
@@ -89,11 +84,32 @@ connectDB()
     app.use("/api/messages", messageRouter);
     app.use("/api", eventRoutes);
     app.use("/api/bookings", bookingRouter);
-    app.use("/api/services", ServiceRouter)
-    app.use("/", paymentRouter);
-    app.use("/api/providers", providerBookingRoutes)
-    
+    app.use("/api/services", ServiceRouter);
+    app.use("/api", paymentRouter);
+    app.use("/api/providers", providerBookingRoutes);
+    app.use('/api/socket-test', socketTestRoutes);
+    // Add these routes to your existing server
+    app.get("/api/health", (req, res) => {
+      res.json({
+        success: true,
+        message: "🚀 Backend Server is running!",
+        timestamp: new Date().toISOString(),
+        service: "Nkwa Pay Disbursement API",
+        status: "healthy",
+        port: process.env.PORT || 3000,
+      });
+    });
 
+    app.get("/api/test-payment", (req, res) => {
+      res.json({
+        success: true,
+        message: "✅ Payment API is working!",
+        data: {
+          service: "Nkwa Pay Disbursement",
+          status: "Ready for testing",
+        },
+      });
+    });
 
     // NOTIFICATION ROUTES - CORRECTED LOGIC
 

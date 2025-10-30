@@ -1,5 +1,5 @@
 import Booking from "../Models/Booking.js";
-import User from "../models/User.js";
+import User from "../Models/User.js";
 
 // Get all booking requests for the logged-in provider
 export const getProviderBookings = async (req, res) => {

@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import User from "../Models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../lib/cloudinary.js";
@@ -25,7 +25,6 @@ const generateTokenAndCookie = (res, userId, userData) => {
 
   return token;
 };
-
 // UNIFIED LOGIN - for both clients and providers
 export const login = async (req, res) => {
   try {
@@ -66,18 +65,20 @@ export const login = async (req, res) => {
 
     console.log('✅ Login successful:', { email: user.email, role: user.role });
 
-    // RETURN TOKEN IN RESPONSE for frontend to store in localStorage
+    // ✅ FIXED: Return proper user object with both _id and id
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token, // Frontend stores this in localStorage
       user: {
-        id: user._id,
+        _id: user._id.toString(), // Add this line - crucial for socket connection
+        id: user._id.toString(),  // Keep this for compatibility
         name: user.name,
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
         companyName: user.companyName
+        // Include any other user fields you need
       }
     });
 

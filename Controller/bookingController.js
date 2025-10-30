@@ -1,5 +1,5 @@
 import Booking from "../Models/Booking.js";
-import User from "../models/User.js";
+import User from "../Models/User.js";
 
 // Create a new booking with frontend data
 export const createBooking = async (req, res) => {

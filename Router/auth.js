@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import User from "../Models/User.js";
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ const generateToken = (userId, userData) => {
   );
 };
 
-// REGISTER - FIXED
+
 router.post("/register", async (req, res) => {
   try {
     console.log("🔐 Register attempt:", req.body);

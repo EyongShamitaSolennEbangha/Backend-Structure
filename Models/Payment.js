@@ -1,12 +1,15 @@
-// Models/Payment.js
 import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
+  // Transaction identifiers
   transactionId: {
     type: String,
     required: true,
     unique: true
   },
+  nkwaTransactionId: String,
+  
+  // Payment details
   amount: {
     type: Number,
     required: true
@@ -18,56 +21,54 @@ const paymentSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['mobile_money', 'card', 'bank_transfer']
+    enum: ['mobile_money', 'card', 'bank_transfer'],
+    default: 'mobile_money'
   },
   provider: {
     type: String,
     required: true,
-    enum: ['mtn', 'orange', 'express', 'visa', 'mastercard', 'bank']
+    enum: ['mtn', 'orange', 'express', 'visa', 'mastercard', 'bank'],
+    default: 'mtn'
   },
   
-  // Client information
+  // Parties involved
   clientId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
   },
   clientPhone: String,
-  
-  // Service provider information
   serviceProviderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'User'
+  },
+  serviceProviderPhone: {
+    type: String,
     required: true
   },
-  serviceProviderPhone: String,
   
-  // Booking reference
+  // References
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true
+    ref: 'Booking'
   },
   
   // Payment status
   status: {
     type: String,
     required: true,
-    enum: ['pending', 'paid', 'held', 'released', 'refunded', 'failed', 'cancelled'],
+    enum: ['pending', 'processing', 'successful', 'failed', 'cancelled', 'refunded'],
     default: 'pending'
   },
   
-  // Escrow details
-  escrowStatus: {
+  // Nkwa Pay specific fields
+  nkwaStatus: {
     type: String,
-    enum: ['held', 'released', 'refunded', null],
+    enum: ['PENDING', 'SUCCESSFUL', 'FAILED', null],
     default: null
   },
-  heldUntil: Date, // When the payment will be automatically released
-  releaseDate: Date, // When payment was actually released
-  refundDate: Date, // When payment was refunded
+  nkwaResponse: mongoose.Schema.Types.Mixed,
   
-  // Transaction details
+  // Financial details
   description: String,
   reference: {
     type: String,
@@ -77,20 +78,36 @@ const paymentSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  providerAmount: {
-    type: Number // Amount that will go to service provider (amount - serviceFee)
+  providerAmount: Number,
+  
+  // Disbursement details
+  disbursementType: {
+    type: String,
+    enum: ['salary', 'payout', 'refund', 'loan', 'prize', 'other'],
+    default: 'payout'
+  },
+  isDisbursement: {
+    type: Boolean,
+    default: false
   },
   
-  // Security features
-  securityCode: String, // For client to confirm service completion
+  // Security and tracking
+  securityCode: String,
   isDisputed: {
     type: Boolean,
     default: false
   },
-  disputeReason: String
+  disputeReason: String,
+  
+  // Timestamps
+  processedAt: Date,
+  completedAt: Date,
+  failedAt: Date
 }, {
   timestamps: true
 });
 
-const Payment = mongoose.model("Payment", paymentSchema);
+// Check if model already exists before creating it
+const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
+
 export default Payment;

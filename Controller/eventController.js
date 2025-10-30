@@ -45,7 +45,7 @@ export async function createEvent(req, res) {
       message: "Event created successfully",
       data: savedEvent,
     });
-  } catch (error) {
+   } catch (error) {
     console.error("Error creating event:", error);
     res.status(500).json({
       message: "Internal server error while creating event",

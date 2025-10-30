@@ -1,5 +1,5 @@
 import express from "express";
-import User from "../models/User.js";
+import User from "../Models/User.js"
 import Message from "../Models/message.model.js"; 
 import { protectRoute } from "../middleware/auth.middleware.js"; 
 
